@@ -1,0 +1,9 @@
+{
+  "server": {
+    "port": 10008
+  },
+  "alist_strm": {},
+  "logMonitorConfigs": [],
+  "taosync": {},
+  "alist": {}
+}

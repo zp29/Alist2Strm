@@ -1,0 +1,19 @@
+@forward 'element-plus/theme-chalk/src/common/var.scss' with (
+  $colors: (
+    'success': ('base': #6abb4f),
+    'info': ('base': #a23fc9),
+  )
+);
+
+// 全局样式设置
+body {
+  background-color: #f5f7fa;
+}
+
+.el-card__body {
+  padding-top: 10px;
+}
+
+.el-card {
+  border-radius: 8px;
+}

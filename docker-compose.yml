@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  qilin-auto:
+    container_name: qilin-auto
+    image: qilin-auto:latest
+    ports:
+      - "9090:9090"
+      - "9009:9009"
+    volumes:
+      - /vol1/1000/sh/ql-ws/logs:/app/server/logs
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
