@@ -17,14 +17,10 @@
   SPA应用框架与UI组件库
 - Vite  
   下一代前端构建工具
-- Pinia  
-  状态管理解决方案
 
 ### 后端技术栈
 - Node.js + Express  
   高性能服务端框架
-- Docker + Docker Compose  
-  容器化部署方案
 - 文件系统监控  
   基于inotify的目录监听机制
 
