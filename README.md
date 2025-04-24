@@ -1,5 +1,5 @@
 # qilin-Auto 影视库自动化任务管理平台
-<img src="./qilin-auto-jt.png" border="0">
+<img src="./qilin-auto-jt.png" width="800">
 ## 🌟 项目简介
 影视库自动化解决方案，实现了网盘文件实时生成strm文件，Cloudsaver保存文件后，自动通知Alist目录刷新，还有Alist-strm自动生成strm文件，不依赖定时任务，减少访问网盘的次数和提高执行效率。
 
