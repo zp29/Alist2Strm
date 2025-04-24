@@ -101,7 +101,7 @@ docker-compose up -d
    点击边侧栏，分别填入Alist和Alist-strm的api令牌，Alist-strm的api令牌在该程序的"其他"页面
 4. **自动化任务创建**  
    在「自动化列表」中配置Alist-strm/Alist目录刷新任务，每个任务可以设置延时触发时间
-5 **检验自动化任务** 
+5. **检验自动化任务**  
    登录cloudsaver保存任一文件，打开Alist刷新设置的目录，如果显示保存的目录即为生效，
    打开Alist-strm的配置列表，查看对应配置的日志，如果日志有变化即为生效
 
