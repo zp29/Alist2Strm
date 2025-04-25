@@ -85,7 +85,8 @@ services:
     environment:
       - NODE_ENV=production
 ```
-#### 注意：1.cloudsaver容器需提前设置文件映射，"/vol1/1000/cloudsaver/logs:/app/logs",  2.下载Releases页面的config.json,复制到宿主机数据文件夹(如./data)。
+#### 注意：1.cloudsaver容器需提前设置文件映射，"/vol1/1000/cloudsaver/logs:/app/logs",  
+&nbsp;&nbsp;2.下载Releases页面的config.json,复制到宿主机数据文件夹(如./data)。
 
   
 #### 3.启动容器
