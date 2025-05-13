@@ -43,11 +43,11 @@ wss.on('connection', (ws) => {
 });
 
 // 设置默认日志文件路径
-const defaultLogPath = path.join(__dirname, 'logs', 'combined.log');
+const defaultLogPath = path.join(__dirname, 'logs', 'csnews.log');
 
 // 获取活跃的日志监控配置路径
 const activeLogConfig = config.logMonitorConfigs?.find(c => c.status === 'active');
-const logFile = activeLogConfig?.logPath || defaultLogPath;
+const logFile = defaultLogPath;
 
 // 确保日志目录存在
 const logDir = path.dirname(logFile);
@@ -67,16 +67,16 @@ let lastMessage = null;
 // 创建文件监听器
 const watcher = fs.watch(logFile, (eventType) => {
     if (eventType === 'change') {
-        // 读取文件的最后两行
+        // 读取文件的最后一行
         const fileContent = fs.readFileSync(logFile, 'utf8');
         const lines = fileContent.trim().split('\n');
-        const lastTwoLines = lines.slice(-2);
+        const lastLine = lines.slice(-1);
 
-        // 处理最后两行
-        for (const line of lastTwoLines) {
+        // 处理最后一行
+        for (const line of lastLine) {
             try {
                 // 检查是否包含保存文件的信息
-                if (line.includes('保存文件')) {
+                if (line.includes('收到CS请求')) {
                     const message = {
                         type: 'save_success',
                         timestamp: new Date().toISOString()
@@ -107,42 +107,102 @@ const watcher = fs.watch(logFile, (eventType) => {
                         if (alistConfig && alistConfig.apiKey && alistConfig.address && alistTasks.length > 0) {
                             // 遍历每个任务配置
                             alistTasks.forEach(task => {
-                                const monitorPath = task.monitorPath;
                                 const delayTime = task.delayTime || 0;
-
-                                // 使用setTimeout来延迟执行API调用
-                                setTimeout(() => {
-                                    axios.post(`${alistConfig.address}/api/fs/list`, {
-                                        "path": monitorPath,
-                                        "password": "",
-                                        "page": 1,
-                                        "per_page": 0,
-                                        "refresh": true
-                                    }, {
-                                        headers: {
-                                            "Authorization": `${alistConfig.apiKey}`,
-                                            "Content-Type": "application/json"
-                                        }
-                                    })
-                                    .then((response) => {
-                                        logger.info('成功刷新Alist目录', {
-                                            path: monitorPath,
-                                            delayTime: delayTime,
-                                            status: response.status,
-                                            data: response.data
-                                        });
-                                    })
-                                    .catch(error => {
-                                        logger.error('调用Alist API失败', {
-                                            path: monitorPath,
-                                            error: error.message,
-                                            status: error.response?.status,
-                                            data: error.response?.data,
-                                            headers: error.response?.headers
-                                        });
+                                
+                                // 检查是否启用路径匹配功能
+                                if (task.pathMatch === true) {
+                                    // 提取日志中的资源路径信息
+                                    const resourcePathMatch = line.match(/"资源路径":"([^"]+)"/);
+                                    if (resourcePathMatch && resourcePathMatch[1]) {
+                                        const resourcePath = resourcePathMatch[1];
+                                        logger.info('检测到资源路径', { resourcePath });
                                         
-                                    });
-                                }, delayTime * 1000); // 将秒转换为毫秒
+                                        // 处理资源路径
+                                        let newPath;
+                                        if (resourcePath.startsWith('全部文件')) {
+                                            // 去掉"全部文件"前缀，与monitorPath拼接
+                                            const relativePath = resourcePath.replace('全部文件', '');
+                                            newPath = task.monitorPath + relativePath;
+                                        } else {
+                                            // 如果路径不以'全部文件'开头，在monitorPath和resourcePath之间添加/分隔符
+                                            newPath = task.monitorPath + '/' + resourcePath;
+                                        }
+                                        logger.info('路径匹配模式：处理后的路径', { originalPath: resourcePath, newPath });
+                                        
+                                        // 使用setTimeout来延迟执行API调用
+                                        setTimeout(() => {
+                                            axios.post(`${alistConfig.address}/api/fs/list`, {
+                                                "path": newPath,
+                                                "password": "",
+                                                "page": 1,
+                                                "per_page": 0,
+                                                "refresh": true
+                                            }, {
+                                                headers: {
+                                                    "Authorization": `${alistConfig.apiKey}`,
+                                                    "Content-Type": "application/json"
+                                                }
+                                            })
+                                            .then((response) => {
+                                                logger.info('成功刷新Alist目录(路径匹配模式)', {
+                                                    originalPath: resourcePath,
+                                                    path: newPath,
+                                                    delayTime: delayTime,
+                                                    status: response.status,
+                                                    data: response.data
+                                                });
+                                            })
+                                            .catch(error => {
+                                                logger.error('调用Alist API失败(路径匹配模式)', {
+                                                    originalPath: resourcePath,
+                                                    path: newPath,
+                                                    error: error.message,
+                                                    status: error.response?.status,
+                                                    data: error.response?.data,
+                                                    headers: error.response?.headers
+                                                });
+                                            });
+                                        }, delayTime * 1000); // 将秒转换为毫秒
+                                    } else {
+                                        logger.warn('路径匹配模式：未在日志中找到资源路径信息');
+                                    }
+                                } else {
+                                    // 原有的刷新逻辑（pathMatch为false或未设置）
+                                    const monitorPath = task.monitorPath;
+                                    
+                                    // 使用setTimeout来延迟执行API调用
+                                    setTimeout(() => {
+                                        axios.post(`${alistConfig.address}/api/fs/list`, {
+                                            "path": monitorPath,
+                                            "password": "",
+                                            "page": 1,
+                                            "per_page": 0,
+                                            "refresh": true
+                                        }, {
+                                            headers: {
+                                                "Authorization": `${alistConfig.apiKey}`,
+                                                "Content-Type": "application/json"
+                                            }
+                                        })
+                                        .then((response) => {
+                                            logger.info('成功刷新Alist目录(常规模式)', {
+                                                path: monitorPath,
+                                                delayTime: delayTime,
+                                                status: response.status,
+                                                data: response.data
+                                            });
+                                        })
+                                        .catch(error => {
+                                            logger.error('调用Alist API失败(常规模式)', {
+                                                path: monitorPath,
+                                                error: error.message,
+                                                status: error.response?.status,
+                                                data: error.response?.data,
+                                                headers: error.response?.headers
+                                            });
+                                        });
+                                    }, delayTime * 1000); // 将秒转换为毫秒
+                                }
                             });
                         }
                         

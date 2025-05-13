@@ -23,11 +23,11 @@ router.get('/', (req, res) => {
 // 创建新的日志监控配置
 router.post('/', (req, res) => {
     try {
-        const { logPath } = req.body;
-        if (!logPath) {
+        const { api_key } = req.body;
+        if (!api_key) {
             return res.status(400).json({ error: '日志路径不能为空' });
         }
-        const newConfig = createLogMonitorConfig(logPath);
+        const newConfig = createLogMonitorConfig(api_key);
         res.status(201).json(newConfig);
     } catch (error) {
         console.error('创建监控配置失败:', error);
@@ -58,11 +58,11 @@ router.put('/:id/status', (req, res) => {
 router.put('/:id', (req, res) => {
     try {
         const { id } = req.params;
-        const { logPath } = req.body;
-        if (!logPath) {
+        const { api_key } = req.body;
+        if (!api_key) {
             return res.status(400).json({ error: '日志路径不能为空' });
         }
-        const updatedConfig = updateLogMonitorConfig(id, logPath);
+        const updatedConfig = updateLogMonitorConfig(id, api_key);
         if (!updatedConfig) {
             return res.status(404).json({ error: '未找到指定的监控配置' });
         }

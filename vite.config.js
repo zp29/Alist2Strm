@@ -41,6 +41,7 @@ export default defineConfig({
     port: 9089,        // 指定端口
     strictPort: true,  // 如果端口被占用则会直接退出
     open: false,        // 启动时自动打开浏览器
+    allowedHosts: true,  // 禁用主机名检查，允许任何域名访问
     proxy: {
       '/api': {
         target: 'http://localhost:9009',

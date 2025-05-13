@@ -13,7 +13,7 @@
     </div>
     <el-divider></el-divider>
     
-    <h2 class="subsection-title">CloudSaver日志监控配置</h2>
+    <h2 class="subsection-title">qilin Auto令牌配置</h2>
     <el-card class="content-card">
       <div class="card-actions">
         <el-button type="primary" @click="handleCreateClick">创建</el-button>
@@ -21,7 +21,7 @@
       </div>
       <el-table v-if="monitorConfigs.length > 0" :data="monitorConfigs" style="width: 100%">
         <el-table-column prop="createTime" label="创建时间" width="180" />
-        <el-table-column prop="logPath" label="日志监控路径" />
+        <el-table-column prop="api_key" label="API令牌" />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="scope">
             <el-tag :type="scope.row.status === 'active' ? 'success' : 'info'">
@@ -58,20 +58,20 @@
         </el-table-column>
       </el-table>
       <div v-else class="card-message">
-        <span class="message-text">暂无监控配置，请点击创建按钮添加</span>
+        <span class="message-text">暂无API令牌，请点击创建按钮添加</span>
       </div>
     </el-card>
 
     <!-- 创建监控配置的对话框 -->
     <el-dialog
       v-model="dialogVisible"
-      title="创建日志监控配置"
+      title="创建API令牌配置"
       width="30%"
       :close-on-click-modal="false"
     >
       <el-form :model="form" label-width="120px">
-        <el-form-item label="日志监控目录">
-          <el-input v-model="form.logPath" placeholder="请输入日志监控目录路径" />
+        <el-form-item label="API令牌">
+          <el-input v-model="form.api_key" placeholder="请输入API令牌" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -85,13 +85,13 @@
     <!-- 编辑监控配置的对话框 -->
     <el-dialog
       v-model="monitorEditDialogVisible"
-      title="编辑日志监控配置"
+      title="编辑API令牌配置"
       width="30%"
       :close-on-click-modal="false"
     >
       <el-form :model="monitorEditForm" label-width="120px">
-        <el-form-item label="日志监控目录">
-          <el-input v-model="monitorEditForm.logPath" placeholder="请输入日志监控目录路径" />
+        <el-form-item label="API令牌">
+          <el-input v-model="monitorEditForm.api_key" placeholder="请输入API令牌" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -118,6 +118,13 @@
         <el-table-column prop="program" label="自动化程序">
           <template #default="scope">
             {{ scope.row.program === 'alist' ? 'Alist目录刷新' : scope.row.program }}
+          </template>
+        </el-table-column>
+        <el-table-column label="模式" width="100">
+          <template #default="scope">
+            <el-tag :type="scope.row.pathMatch ? 'success' : 'warning'">
+              {{ scope.row.pathMatch ? '匹配模式' : '常规模式' }}
+            </el-tag>
           </template>
         </el-table-column>
         <el-table-column label="配置ID或目录">
@@ -191,15 +198,19 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item :label="automationForm.program === 'alist' ? '监控路径' : '配置ID'">
+        <el-form-item label="路径匹配">
+          <el-switch v-model="automationForm.pathMatch" />
+        </el-form-item>
+        <el-form-item :label="(automationForm.program === 'alist' || automationForm.program === 'alist-strm' || (automationForm.program === 'taosync' && automationForm.pathMatch)) ? (automationForm.pathMatch ? '匹配规则' : (automationForm.program === 'alist' ? '监控路径' : '配置ID'))  : '配置ID'">
           <el-input 
             v-if="automationForm.program === 'alist'"
             v-model="automationForm.monitorPath" 
-            placeholder="请输入需要监控的文件夹路径" />
+            :placeholder="automationForm.pathMatch ? '请输入匹配规则' : '请输入alist的根目录'" />
           <el-input 
             v-else
             v-model="automationForm.configId" 
-            placeholder="请输入配置ID,如1或者1,2" />
+            :disabled="automationForm.program !== 'alist-strm' && automationForm.program !== 'taosync' && !automationForm.pathMatch"
+            :placeholder="(automationForm.program === 'alist-strm' || automationForm.program === 'taosync') && automationForm.pathMatch ? '请输入匹配规则' : (automationForm.program === 'taosync' ? '请输入配置ID,如1或者1;2' : '请输入配置ID,如1或者1,2')" />
         </el-form-item>
         <el-form-item label="延迟时间(秒)">
           <el-input-number v-model="automationForm.delayTime" :min="0" :step="1" />
@@ -224,15 +235,20 @@
         <el-form-item label="自动化程序">
           <el-input :value="editForm.program" disabled />
         </el-form-item>
-        <el-form-item :label="editForm.program === 'alist' ? '监控路径' : '配置ID'">
+        <el-form-item label="路径匹配">
+          <el-switch v-model="editForm.pathMatch" />
+        </el-form-item>
+        <el-form-item :label="(editForm.program === 'alist' || editForm.program === 'alist-strm' || (editForm.program === 'taosync' && editForm.pathMatch)) ? (editForm.pathMatch ? '匹配规则' : (editForm.program === 'alist' ? '监控路径' : '配置ID'))  : '配置ID'">
           <el-input 
             v-if="editForm.program === 'alist'"
             v-model="editForm.monitorPath" 
-            placeholder="请输入需要监控的文件夹路径" />
+            :disabled="!editForm.pathMatch"
+            :placeholder="editForm.pathMatch ? '请输入匹配规则' : '请输入alist的根目录'" />
           <el-input 
             v-else
             v-model="editForm.configId" 
-            placeholder="请输入配置ID,如1或者1,2" />
+            :disabled="editForm.program !== 'alist-strm' && editForm.program !== 'taosync' && !editForm.pathMatch"
+            :placeholder="(editForm.program === 'alist-strm' || editForm.program === 'taosync') && editForm.pathMatch ? '请输入匹配规则' : (editForm.program === 'taosync' ? '请输入配置ID,如1或者1;2' : '请输入配置ID,如1或者1,2')" />
         </el-form-item>
         <el-form-item label="延迟时间(秒)">
           <el-input-number v-model="editForm.delayTime" :min="0" :step="1" />
@@ -285,13 +301,13 @@ const { isDark: isDarkMode, toggleTheme: toggleDarkMode } = useTheme()
 const dialogVisible = ref(false)
 const monitorConfigs = ref([])
 const form = ref({
-  logPath: ''
+  api_key: ''
 })
 
 const monitorEditDialogVisible = ref(false)
 const monitorEditForm = ref({
   id: '',
-  logPath: ''
+  api_key: ''
 })
 
 const logDialogVisible = ref(false)
@@ -347,19 +363,22 @@ const handleViewLog = async (config) => {
   }
 }
 
+
 // 查看自动化任务日志
 const handleViewAutomationLog = async (task) => {
   try {
-    let logPath = ''
+    let logPath = '';
     if (task.program === 'alist') {
-      logPath = `logs/alist-refresh-${task.portId}.log`
+      logPath = `/app/server/logs/alist-refresh-${task.portId}.log`;
     } else if (task.program === 'alist-strm') {
-      logPath = 'logs/alist-strm-api.log'
+      logPath = `/app//server/logs/alist-strm-api-${task.portId}.log`;
+    } else if (task.program === 'taosync') {
+      logPath = `/app//server/logs/taosync-${task.portId}.log`;
     }
     
     if (!logPath) {
-      ElMessage.warning('该任务类型暂不支持查看日志')
-      return
+      ElMessage.warning('该任务类型暂不支持查看日志');
+      return;
     }
 
     currentLogConfig.value = { logPath }
@@ -392,7 +411,7 @@ const fetchMonitorConfigs = async () => {
 
 // 创建监控配置
 const createMonitorConfig = async () => {
-  if (!form.value.logPath) {
+  if (!form.value.api_key) {
     ElMessage.warning('请输入日志监控目录路径')
     return
   }
@@ -404,11 +423,11 @@ const createMonitorConfig = async () => {
 
   try {
     const response = await axios.post('/api/log-monitor', {
-      logPath: form.value.logPath
+      api_key: form.value.api_key
     })
     monitorConfigs.value.push(response.data)
     dialogVisible.value = false
-    form.value.logPath = ''
+    form.value.api_key = ''
     ElMessage.success('创建成功')
   } catch (error) {
     ElMessage.error('创建监控配置失败')
@@ -482,21 +501,21 @@ const handleCreateClick = () => {
 const handleEditMonitor = (config) => {
   monitorEditForm.value = {
     id: config.id,
-    logPath: config.logPath
+    api_key: config.api_key
   }
   monitorEditDialogVisible.value = true
 }
 
 // 更新监控配置
 const updateMonitorConfig = async () => {
-  if (!monitorEditForm.value.logPath) {
+  if (!monitorEditForm.value.api_key) {
     ElMessage.warning('请输入日志监控目录路径')
     return
   }
 
   try {
     const response = await axios.put(`/api/log-monitor/${monitorEditForm.value.id}`, {
-      logPath: monitorEditForm.value.logPath
+      api_key: monitorEditForm.value.api_key
     })
     const index = monitorConfigs.value.findIndex(config => config.id === monitorEditForm.value.id)
     if (index !== -1) {
@@ -516,7 +535,8 @@ const automationForm = ref({
   program: '',
   configId: '', // 用于alist-strm和taosync
   monitorPath: '', // 用于alist
-  delayTime: 0
+  delayTime: 0,
+  pathMatch: false // 路径匹配开关
 })
 
 const programOptions = [
@@ -538,23 +558,12 @@ const createAutomationTask = async () => {
     ElMessage.warning('请选择自动化程序')
     return
   }
-  if (automationForm.value.program === 'alist') {
-    if (!automationForm.value.monitorPath) {
+  if (!automationForm.value.pathMatch) {
+    if (automationForm.value.program === 'alist' && !automationForm.value.monitorPath) {
       ElMessage.warning('请输入监控路径')
       return
-    }
-  } else {
-    if (!automationForm.value.configId) {
+    } else if (automationForm.value.program !== 'alist' && !automationForm.value.configId) {
       ElMessage.warning('请输入配置ID')
-      return
-    }
-  }
-
-  // 检查是否存在相同类型的任务（除了alist目录刷新任务）
-  if (automationForm.value.program !== 'alist') {
-    const existingTask = automationTasks.value.find(task => task.program === automationForm.value.program)
-    if (existingTask) {
-      ElMessage.warning(`请删除原有${automationForm.value.program}自动化任务，再操作`)
       return
     }
   }
@@ -566,14 +575,13 @@ const createAutomationTask = async () => {
       status: 'inactive'
     }
     
-    // 如果是alist目录刷新任务，添加portId
-    if (automationForm.value.program === 'alist') {
-      const existingAlistTasks = automationTasks.value.filter(task => task.program === 'alist')
-      const maxPortId = existingAlistTasks.length > 0
-        ? Math.max(...existingAlistTasks.map(task => task.portId || 0))
-        : 0
-      taskData.portId = maxPortId + 1
-    }
+    // 为所有项目添加 portId
+    const existingTasks = automationTasks.value.filter(task => task.program === automationForm.value.program)
+    const maxPortId = existingTasks.length > 0
+      ? Math.max(...existingTasks.map(task => task.portId || 0))
+      : 0
+    taskData.portId = maxPortId + 1
+    
     const response = await axios.post('/api/automation', taskData)
     automationTasks.value.push(response.data)
     automationDialogVisible.value = false
@@ -581,7 +589,8 @@ const createAutomationTask = async () => {
       program: '',
       configId: '',
       monitorPath: '',
-      delayTime: 0
+      delayTime: 0,
+      pathMatch: false
     }
     ElMessage.success('创建成功')
   } catch (error) {
@@ -624,7 +633,8 @@ const editForm = ref({
   configId: '',
   monitorPath: '',
   delayTime: 0,
-  portId: null
+  portId: null,
+  pathMatch: false
 })
 
 const handleEditAutomation = (task) => {
@@ -633,23 +643,36 @@ const handleEditAutomation = (task) => {
 }
 
 const updateAutomationTask = async () => {
-  if (editForm.value.program === 'alist') {
-    if (!editForm.value.monitorPath) {
-      ElMessage.warning('请输入监控路径')
-      return
-    }
-  } else {
-    if (!editForm.value.configId) {
-      ElMessage.warning('请输入配置ID')
-      return
-    }
+  if (!editForm.value.pathMatch) {
+    if (editForm.value.program === 'alist') {
+      if (!editForm.value.monitorPath) {
+        ElMessage.warning('请输入监控路径')
+        return
+      }
+    } else {
+      if (!editForm.value.configId) {
+        ElMessage.warning('请输入配置ID')
+        return
+      }
 
-    // 检查是否存在相同类型的任务（除了当前正在编辑的任务）
-    const existingTask = automationTasks.value.find(
-      task => task.program === editForm.value.program && task.id !== editForm.value.id
+      // 检查是否存在相同类型的任务（除了当前正在编辑的任务）
+      const existingTask = automationTasks.value.find(
+        task => task.program === editForm.value.program && task.id !== editForm.value.id
+      )
+      if (existingTask) {
+        ElMessage.warning(`已存在${editForm.value.program}自动化任务`)
+        return
+      }
+    }
+  }
+
+  // 检查是否存在同类型且启用了路径匹配的任务（除了当前正在编辑的任务）
+  if (editForm.value.pathMatch) {
+    const existingPathMatchTask = automationTasks.value.find(
+      task => task.program === editForm.value.program && task.pathMatch && task.id !== editForm.value.id
     )
-    if (existingTask) {
-      ElMessage.warning(`已存在${editForm.value.program}自动化任务`)
+    if (existingPathMatchTask) {
+      ElMessage.warning(`已存在${editForm.value.program}的路径匹配任务，不能创建更多`)
       return
     }
   }

@@ -12,3 +12,4 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=production
+    command: npm run preview

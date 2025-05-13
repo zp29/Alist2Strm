@@ -11,11 +11,11 @@ const logger = createLogger(__filename);
 const config = JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'config.json'), 'utf8'));
 
 // 读取自动化任务配置
-function getAlistStrmTasks() {
+function getTaosyncTasks() {
     try {
         const autoConfig = JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'auto.json'), 'utf8'));
         return autoConfig.automationTasks.filter(task => 
-            task.program === 'alist-strm' && task.status === 'active' && task.portId === 1
+            task.program === 'taosync' && task.status === 'active' && task.portId === 1
         );
     } catch (error) {
         logger.error('读取auto.json失败', { error: error.message });
@@ -106,20 +106,20 @@ const watcher = fs.watch(logFile, (eventType) => {
                             }
                         });
                     
-                        // 获取alist-strm的自动化任务配置
-                        const alistStrmTasks = getAlistStrmTasks();
-                        // 获取第一个可用的alist_strm配置
-                        const alistStrmConfig = Object.values(config.alist_strm || {})[0];
+                        // 获取taosync的自动化任务配置
+                        const taosyncTasks = getTaosyncTasks();
+                        // 获取第一个可用的taosync配置
+                        const taosyncConfig = Object.values(config.taosync || {})[0];
                     
-                        if (alistStrmConfig && alistStrmConfig.apiKey && alistStrmConfig.address && alistStrmTasks.length > 0) {
+                        if (taosyncConfig && taosyncConfig.apiKey && taosyncConfig.address && taosyncTasks.length > 0) {
                             // 遍历每个任务配置
-                            alistStrmTasks.forEach(task => {
+                            taosyncTasks.forEach(task => {
                                 const delayTime = task.delayTime || 0;
                                 
                                 // 检查是否启用路径匹配功能
                                 if (task.pathMatch === true) {
                                     // 提取日志中的资源路径信息
-                                    const resourcePathMatch = line.match(/"资源路径":"([^"]+)"/); 
+                                    const resourcePathMatch = line.match(/"资源路径":"([^"]+)"/);
                                     if (resourcePathMatch && resourcePathMatch[1]) {
                                         const resourcePath = resourcePathMatch[1];
                                         logger.info('检测到资源路径', { resourcePath });
@@ -139,20 +139,22 @@ const watcher = fs.watch(logFile, (eventType) => {
                                             
                                             // 使用setTimeout来延迟执行API调用
                                             setTimeout(() => {
-                                                axios.post(`${alistStrmConfig.address}/api/run_config/${configId}`, null, {
+                                                axios.post(`${taosyncConfig.address}/api/job`, {
+                                                    "id": configId
+                                                }, {
                                                     headers: {
-                                                        'X-API-Key': alistStrmConfig.apiKey
+                                                        'api-key': taosyncConfig.apiKey
                                                     }
                                                 })
                                                 .then(() => {
-                                                    logger.info('成功触发alist-strm配置运行(路径匹配模式)', { 
+                                                    logger.info('成功触发taosync配置运行(路径匹配模式)', { 
                                                         resource_path: resourcePath,
                                                         config_id: configId, 
                                                         delay_time: delayTime 
                                                     });
                                                 })
                                                 .catch(error => {
-                                                    logger.error('调用alist-strm API失败(路径匹配模式)', { 
+                                                    logger.error('调用taosync API失败(路径匹配模式)', { 
                                                         resource_path: resourcePath,
                                                         config_id: configId, 
                                                         error: error.message 
@@ -171,23 +173,25 @@ const watcher = fs.watch(logFile, (eventType) => {
                                     
                                     // 使用setTimeout来延迟执行API调用
                                     setTimeout(() => {
-                                        axios.post(`${alistStrmConfig.address}/api/run_config/${configId}`, null, {
-                                            headers: {
-                                                'X-API-Key': alistStrmConfig.apiKey
-                                            }
-                                        })
+                                        axios.post(`${taosyncConfig.address}/api/job`, {
+                                                "id": configId
+                                            }, {
+                                                headers: {
+                                                    'api-key': taosyncConfig.apiKey
+                                                }
+                                            })
                                         .then(() => {
-                                            logger.info('成功触发alist-strm配置运行(常规模式)', { config_id: configId, delay_time: delayTime });
+                                            logger.info('成功触发taosync配置运行(常规模式)', { config_id: configId, delay_time: delayTime });
                                         })
                                         .catch(error => {
-                                            logger.error('调用alist-strm API失败(常规模式)', { config_id: configId, error: error.message });
+                                            logger.error('调用taosync API失败(常规模式)', { config_id: configId, error: error.message });
                                         });
                                     }, delayTime * 1000); // 将秒转换为毫秒
                                 }
                             });
                         }
                     
-                        logger.info('文件转存成功，已发送信息到Ailst-strm');
+                        logger.info('文件转存成功，已发送信息到taosync');
                         debounceTimer = null;
                         lastMessage = null;
                     }, 2000); // 2秒的防抖时间
@@ -213,19 +217,19 @@ logger.info('WebSocket服务器已启动', {
     logFile: logFile
 });
 
-// 获取并显示alist-strm任务配置信息
-const alistStrmTasks = getAlistStrmTasks();
-// 获取第一个可用的alist_strm配置
-const alistStrmConfig = Object.values(config.alist_strm || {})[0];
+// 获取并显示taosync任务配置信息
+const taosyncTasks = getTaosyncTasks();
+// 获取第一个可用的taosync配置
+const taosyncConfig = Object.values(config.taosync || {})[0];
 
-if (alistStrmConfig && alistStrmConfig.apiKey && alistStrmConfig.address && alistStrmTasks.length > 0) {
-    logger.info('Alist-Strm任务配置信息', {
-        tasks: alistStrmTasks.map(task => ({
+if (taosyncConfig && taosyncConfig.apiKey && taosyncConfig.address && taosyncTasks.length > 0) {
+    logger.info('Taosync任务配置信息', {
+        tasks: taosyncTasks.map(task => ({
             config_id: task.configId,
-            api_url: `${alistStrmConfig.address}/api/run_config/${task.configId}`,
+            api_url: `${taosyncConfig.address}/api/job`,
             delay_time: task.delayTime || 0
         }))
     });
 } else {
-    logger.info('未找到有效的Alist-Strm任务配置');
+    logger.info('未找到有效的Taosync任务配置');
 }

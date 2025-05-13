@@ -11,8 +11,11 @@ function readConfig() {
 
 // 保存配置文件
 function saveConfig(config) {
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8');
 }
+
+
+
 
 // 获取所有日志监控配置
 function getLogMonitorConfigs() {
@@ -21,12 +24,16 @@ function getLogMonitorConfigs() {
 }
 
 // 创建新的日志监控配置
-function createLogMonitorConfig(logPath) {
+function createLogMonitorConfig(api_key) {
     const config = readConfig();
     const newConfig = {
         id: Date.now().toString(),
-        createTime: new Date().toLocaleString(),
-        logPath,
+        createTime: (() => {
+            const now = new Date();
+            return `${now.getFullYear()}/${now.getMonth() + 1}/${now.getDate()} ${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`;
+        })(), 
+        api_key,
+        logPath: '/app/server/logs/csnews.log',
         status: 'active'
     };
     
@@ -60,18 +67,40 @@ function deleteLogMonitorConfig(id) {
 }
 
 // 更新日志监控配置
-function updateLogMonitorConfig(id, logPath) {
+function updateLogMonitorConfig(id, api_key) {
     const config = readConfig();
     const configIndex = config.logMonitorConfigs.findIndex(c => c.id === id);
     
     if (configIndex !== -1) {
-        config.logMonitorConfigs[configIndex].logPath = logPath;
+        config.logMonitorConfigs[configIndex].api_key = api_key;
         saveConfig(config);
         return config.logMonitorConfigs[configIndex];
     }
     return null;
 }
 
+// 获取API令牌
+function getApiKey(id) {
+    try {
+        const config = readConfig();
+        const monitorConfig = config.logMonitorConfigs.find(c => c.id === id);
+        
+        if (!monitorConfig) {
+            console.error('监控配置不存在:', id);
+            throw new Error('监控配置不存在');
+        }
+
+        if (monitorConfig.status !== 'active') {
+            console.error('监控配置未激活:', id);
+            throw new Error('监控配置未激活');
+        }
+
+        return monitorConfig.api_key;
+    } catch (error) {
+        console.error('获取API令牌失败:', error);
+        throw error; // 向上抛出错误，让路由处理器处理
+    }
+}
 // 获取日志文件内容
 function getLogContent(logPath) {
     try {
@@ -106,5 +135,6 @@ module.exports = {
     updateLogMonitorStatus,
     deleteLogMonitorConfig,
     updateLogMonitorConfig,
+    getApiKey,
     getLogContent
 };
