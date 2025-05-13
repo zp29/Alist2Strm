@@ -107,7 +107,8 @@ docker-compose up -d
 
 
 ## 🔧 使用指南
-- [使用文档](https://www.yuque.com/qilinzhu-qvn1j/oxp3nl/eb8dz4116tmruf9o?singleDoc#)  密码：gity
+- [详细教程](https://www.yuque.com/qilinzhu-qvn1j/oxp3nl/eb8dz4116tmruf9o?singleDoc#)  
+- 密码：gity
 
 ## QQ交流群
 答疑和最新文件都在群里，一群784295077(已满)，二群698788293(未满)
