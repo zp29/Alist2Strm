@@ -17,8 +17,8 @@
       <p class="description">一款能创建影视库自动化任务的应用</p>
       <p class="version">版本：v1.0.3</p>
       <p class="links">
-        <a href="https://github.com/linzxcw/qilin-Auto" target="_blank" rel="noopener noreferrer">
-          Github主页：https://github.com/linzxcw/qilin-Auto
+        <a href="https://github.com/zp29/Alist2strm" target="_blank" rel="noopener noreferrer">
+          Github主页：https://github.com/zp29/Alist2strm
         </a>
       </p>
       <p class="links">

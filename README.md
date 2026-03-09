@@ -1,5 +1,4 @@
-# qilin-Auto 影视库自动化任务管理平台
-<img src="./qilin-auto-jt.png" width="800">
+# Alist2strm 影视库自动化任务管理平台
 
 ## 🌟 项目简介
 影视库自动化解决方案，实现了网盘文件实时生成strm文件，Cloudsaver保存文件后，自动通知Alist目录刷新，还有Alist-strm自动生成strm文件，不依赖定时任务，减少访问网盘的次数和提高执行效率。
@@ -31,8 +30,8 @@
 
 #### 1.克隆仓库
 ```bash
-git clone https://github.com/your-repo/qilin-auto.git
-cd qilin-auto
+git clone https://github.com/zp29/Alist2strm.git
+cd Alist2strm
 ```
 #### 2.安装依赖
 ```bash
@@ -65,16 +64,16 @@ services:
             - "5000:5000"
         container_name: alist-strm-api
         restart: always
-        image: qilinzhu/alist-strm:latest
+        image: zp29/alist-strm:latest
         network_mode: bridge
 ```
 #### 2.qilin Auto进行docker compose部署
 ```bash
 version: '3'
 services:
-  qilin-auto:
-    container_name: qilin-auto
-    image: qilinzhu/qilin-auto:latest
+  Alist2strm:
+    container_name: Alist2strm
+    image: zp29/Alist2strm:latest
     ports:
       - "9090:9090"
       - "9009:9009"
@@ -90,7 +89,7 @@ services:
 version: '3'
 services:
   taoSync:
-    image: qilinzhu/tao-sync:latest
+    image: zp29/tao-sync:latest
     container_name: taoSync
     restart: always
     ports:
